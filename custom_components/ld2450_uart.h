@@ -27,55 +27,86 @@ public:
 
   uint32_t lastPeriodicMillis = millis();
 
-  int twoByteToInt(char firstByte, char secondByte) {
-    return (int16_t)(secondByte << 8) + firstByte;
+  uint16_t twoByteToUint(char firstByte, char secondByte) {
+    return (uint16_t)(secondByte << 8) + firstByte;
   }
 
   void reportTargetInfo(int target, char *raw) {
-    int newX, newY, newResolution, newSpeed;
+    int16_t newX, newY, newSpeed;
+    uint16_t newResolution;
 
     ESP_LOGV(TAG, "Will reporting taget %d", target);
 
     switch (target) {
       case 0:
-        newX = 0 - twoByteToInt(raw[0], raw[1]) / 10;
+        newX = twoByteToUint(raw[0], raw[1] & 0x7F);
+        if (raw[1] >> 7 != 0x1)
+          newX = 0 - newX / 10;
+        else
+          newX = newX / 10;
         if (target1X->get_state() != newX)
           target1X->publish_state(newX);
-        newY = 0 -twoByteToInt(raw[2], raw[3]) / 10;
+        newY = twoByteToUint(raw[2], raw[3] & 0x7F);
+        if (raw[3] >> 7 != 0x1)
+          newY = 0 - newY / 10;
+        else
+          newY = newY / 10;
         if (target1Y->get_state() != newY)
           target1Y->publish_state(newY);
-        newSpeed = twoByteToInt(raw[4], raw[5]);
+        newSpeed = twoByteToUint(raw[4], raw[5] & 0x7F);
+        if (raw[5] >> 7 != 0x1)
+          newSpeed = 0 - newSpeed;
         if (target1Speed->get_state() != newSpeed)
           target1Speed->publish_state(newSpeed);
-        newResolution = twoByteToInt(raw[6], raw[7]);
+        newResolution = twoByteToUint(raw[6], raw[7]);
         if (target1Resolution->get_state() != newResolution)
           target1Resolution->publish_state(newResolution);
         break;
       case 1:
-        newX = 0 - twoByteToInt(raw[0], raw[1]) / 10;
+        newX = twoByteToUint(raw[0], raw[1] & 0x7F);
+        if (raw[1] >> 7 != 0x1)
+          newX = 0 - newX / 10;
+        else
+          newX = newX / 10;
         if (target2X->get_state() != newX)
           target2X->publish_state(newX);
-        newY = 0 - twoByteToInt(raw[2], raw[3]) / 10;
+        newY = twoByteToUint(raw[2], raw[3] & 0x7F);
+        if (raw[3] >> 7 != 0x1)
+          newY = 0 - newY / 10;
+        else
+          newY = newY / 10;
         if (target2Y->get_state() != newY)
           target2Y->publish_state(newY);
-        newSpeed = twoByteToInt(raw[4], raw[5]);
+        newSpeed = twoByteToUint(raw[4], raw[5] & 0x7F);
+        if (raw[5] >> 7 != 0x1)
+          newSpeed = 0 - newSpeed;
         if (target2Speed->get_state() != newSpeed)
           target2Speed->publish_state(newSpeed);
-        newResolution = twoByteToInt(raw[6], raw[7]);
+        newResolution = twoByteToUint(raw[6], raw[7]);
         if (target2Resolution->get_state() != newResolution)
           target2Resolution->publish_state(newResolution);
         break;
       case 2:
-        newX = 0 - twoByteToInt(raw[0], raw[1]) / 10;
+        newX = twoByteToUint(raw[0], raw[1] & 0x7F);
+        if (raw[1] >> 7 != 0x1)
+          newX = 0 - newX / 10;
+        else
+          newX = newX / 10;
         if (target3X->get_state() != newX)
           target3X->publish_state(newX);
-        newY = 0 - twoByteToInt(raw[2], raw[3]) / 10;
+        newY = twoByteToUint(raw[2], raw[3] & 0x7F);
+        if (raw[3] >> 7 != 0x1)
+          newY = 0 - newY / 10;
+        else
+          newY = newY / 10;
         if (target3Y->get_state() != newY)
           target3Y->publish_state(newY);
-        newSpeed = twoByteToInt(raw[4], raw[5]);
+        newSpeed = twoByteToUint(raw[4], raw[5] & 0x7F);
+        if (raw[5] >> 7 != 0x1)
+          newSpeed = 0 - newSpeed;
         if (target3Speed->get_state() != newSpeed)
           target3Speed->publish_state(newSpeed);
-        newResolution = twoByteToInt(raw[6], raw[7]);
+        newResolution = twoByteToUint(raw[6], raw[7]);
         if (target3Resolution->get_state() != newResolution)
           target3Resolution->publish_state(newResolution);
         break;
@@ -136,7 +167,5 @@ public:
   }
 
   void update(){
-    ESP_LOGV(TAG, "wake up ld2450");
-    write_byte(0x00);
   }
 };

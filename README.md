@@ -15,4 +15,6 @@ TX      |<->| RX
 RX      |<->| TX
 
 ## Notice
-The RX, TX need pull-up resister.
+1. The RX, TX need pull-up resister.
+2. Need to upgrade to firmware 1.1.230605 (recommended)
+3. Use hardware serial if use ESP8266.
