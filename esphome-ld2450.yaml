@@ -7,6 +7,12 @@ esphome:
   comment: ${upper_devicename}
   includes:
     - components/ld2450_uart.h
+  on_boot:
+    priority: -100
+    # ...
+    then:
+      - lambda: 'static_cast<LD2450 *>(ld2450)->getInfo();'
+      - lambda: id(tracking_mode).publish_state("Multiple");
 
 esp8266:
   board: esp01_1m
@@ -45,14 +51,171 @@ custom_component:
     components:
       - id: ld2450
 
+binary_sensor:
+  - platform: custom
+    lambda: |-
+      auto uart_component = static_cast<LD2450 *>(ld2450);
+      return {uart_component->lastCommandSuccess, uart_component->configMode, uart_component->bluetoothState};
+    binary_sensors:
+      - name: "Last Command Success"
+        id: binary_sensor_command_state
+        internal: true
+      - name: "Config Mode"
+        icon: mdi:cog
+        id: binary_sensor_config_mode
+      - name: "Bluetooth State"
+        icon: mdi:bluetooth
+        id: binary_sensor_bluetooth_state
+        internal: true
+
+button:
+  - platform: template
+    name: "Reboot LD2450"
+    on_press:
+      - lambda: 'static_cast<LD2450 *>(ld2450)->reboot();'
+  - platform: template
+    name: "Factory Reset LD2450"
+    on_press:
+      - lambda: 'static_cast<LD2450 *>(ld2450)->factoryReset();'
+  - platform: template
+    name: "Single Target Tracking"
+    on_press:
+      - lambda: 'static_cast<LD2450 *>(ld2450)->setSingle();'
+  - platform: template
+    name: "Multiple Targets Tracking"
+    on_press:
+      - lambda: 'static_cast<LD2450 *>(ld2450)->setMultiple();'
+  - platform: template
+    name: "Get Zones Information"
+    on_press:
+      - lambda: 'static_cast<LD2450 *>(ld2450)->getZone();'
+  - platform: template
+    name: "Set Zones Information"
+    on_press:
+      lambda: |-
+        int type = 0;
+        if (id(zone_type).state == "Disable Zone Filter") {
+          type = 0;
+        } else if (id(zone_type).state == "Only Detect Configured Zone") {
+          type = 1;
+        } else if (id(zone_type).state == "Not Detect Configured Zone") {
+          type = 2;
+        }
+        static_cast<LD2450 *>(ld2450)->setZone(type, id(zone1_x1).state * 10, id(zone1_y1).state * 10, id(zone1_x2).state * 10, id(zone1_y2).state * 10, id(zone2_x1).state * 10, id(zone2_y1).state * 10, id(zone2_x2).state * 10, id(zone2_y2).state * 10, id(zone2_x1).state * 10, id(zone2_y1).state * 10, id(zone2_x2).state * 10, id(zone2_y2).state * 10);
+
+number:
+  - platform: template
+    name: "Zone1 X1"
+    id: zone1_x1
+    icon: mdi:align-horizontal-left
+    min_value: -100
+    max_value: 100
+    step: 1
+    optimistic: true
+  - platform: template
+    name: "Zone1 Y1"
+    id: zone1_y1
+    icon: mdi:align-horizontal-distribute
+    min_value: -100
+    max_value: 100
+    step: 1
+    optimistic: true
+  - platform: template
+    name: "Zone1 X2"
+    id: zone1_x2
+    icon: mdi:align-horizontal-right
+    min_value: -100
+    max_value: 100
+    step: 1
+    optimistic: true
+  - platform: template
+    name: "Zone1 Y2"
+    id: zone1_y2
+    icon: mdi:align-horizontal-distribute
+    min_value: -100
+    max_value: 100
+    step: 1
+    optimistic: true
+  - platform: template
+    name: "Zone2 X1"
+    id: zone2_x1
+    icon: mdi:align-horizontal-left
+    min_value: -100
+    max_value: 100
+    step: 1
+    optimistic: true
+  - platform: template
+    name: "Zone2 Y1"
+    id: zone2_y1
+    icon: mdi:align-horizontal-distribute
+    min_value: -100
+    max_value: 100
+    step: 1
+    optimistic: true
+  - platform: template
+    name: "Zone2 X2"
+    id: zone2_x2
+    icon: mdi:align-horizontal-right
+    min_value: -100
+    max_value: 100
+    step: 1
+    optimistic: true
+  - platform: template
+    name: "Zone2 Y2"
+    id: zone2_y2
+    icon: mdi:align-horizontal-distribute
+    min_value: -100
+    max_value: 100
+    step: 1
+    optimistic: true
+  - platform: template
+    name: "Zone3 X1"
+    id: zone3_x1
+    icon: mdi:align-horizontal-left
+    min_value: -100
+    max_value: 100
+    step: 1
+    optimistic: true
+  - platform: template
+    name: "Zone3 Y1"
+    id: zone3_y1
+    icon: mdi:align-horizontal-distribute
+    min_value: -100
+    max_value: 100
+    step: 1
+    optimistic: true
+  - platform: template
+    name: "Zone3 X2"
+    id: zone3_x2
+    icon: mdi:align-horizontal-right
+    min_value: -100
+    max_value: 100
+    step: 1
+    optimistic: true
+  - platform: template
+    name: "Zone3 Y2"
+    id: zone3_y2
+    icon: mdi:align-horizontal-distribute
+    min_value: -100
+    max_value: 100
+    step: 1
+    optimistic: true
+
+select:
+  - platform: template
+    name: "Template select"
+    id: zone_type
+    optimistic: true
+    options:
+      - Disable Zone Filter
+      - Only Detect Configured Zone
+      - Not Detect Configured Zone
 
 sensor:
   - platform: custom
     lambda: |-
       auto uart_component = static_cast<LD2450 *>(ld2450);
-      return {uart_component->target1Resolution, uart_component->target1Speed, uart_component->target1X, uart_component->target1Y,
-              uart_component->target2Resolution, uart_component->target2Speed, uart_component->target2X, uart_component->target2Y,
-              uart_component->target3Resolution, uart_component->target3Speed, uart_component->target3X, uart_component->target3Y,
+      return {uart_component->target1Resolution, uart_component->target1Speed, uart_component->target1X, uart_component->target1Y, uart_component->target2Resolution, uart_component->target2Speed, uart_component->target2X, uart_component->target2Y, uart_component->target3Resolution, uart_component->target3Speed, uart_component->target3X, uart_component->target3Y, uart_component->targets, uart_component->zoneType, uart_component->zone1X1, uart_component->zone1Y1, uart_component->zone1X2, uart_component->zone1Y2, uart_component->zone2X1, uart_component->zone2Y1, uart_component->zone2X2, uart_component->zone2Y2, uart_component->zone3X1, uart_component->zone3Y1, uart_component->zone3X2, uart_component->zone3Y2
       };
     sensors:
       - name: "Target1 Resolution"
@@ -103,3 +266,168 @@ sensor:
         unit_of_measurement: "cm"
         accuracy_decimals: 0
         icon: mdi:map-marker-down
+      - name: "Targets"
+      - name: "Zone Type"
+        id: zonetype
+        icon: mdi:tangram
+        internal: true
+        on_value:
+          then:
+            lambda: |-
+              if (id(zonetype).state == 0) {
+                id(zone_type).publish_state("Disable Zone Filter");
+              } else if (id(zonetype).state == 1) {
+                id(zone_type).publish_state("Only Detect Configured Zone");
+              } else if (id(zonetype).state == 2) {
+                id(zone_type).publish_state("Not Detect Configured Zone");
+              }
+      - name: "Zone1 X1"
+        id: zone1x1
+        unit_of_measurement: "cm"
+        accuracy_decimals: 0
+        icon: mdi:align-horizontal-left
+        internal: true
+        on_value:
+          then:
+            - lambda: id(zone1_x1).publish_state(id(zone1x1).state);
+      - name: "Zone1 Y1"
+        id: zone1y1
+        unit_of_measurement: "cm"
+        accuracy_decimals: 0
+        icon: mdi:align-horizontal-distribute
+        internal: true
+        on_value:
+          then:
+            - lambda: id(zone1_y1).publish_state(id(zone1y1).state);
+      - name: "Zone1 X2"
+        id: zone1x2
+        unit_of_measurement: "cm"
+        accuracy_decimals: 0
+        icon: mdi:align-horizontal-right
+        internal: true
+        on_value:
+          then:
+            - lambda: id(zone1_x2).publish_state(id(zone1x2).state);
+      - name: "Zone1 Y2"
+        id: zone1y2
+        unit_of_measurement: "cm"
+        accuracy_decimals: 0
+        icon: mdi:align-horizontal-distribute
+        internal: true
+        on_value:
+          then:
+            - lambda: id(zone1_y2).publish_state(id(zone1y2).state);
+      - name: "Zone2 X1"
+        id: zone2x1
+        unit_of_measurement: "cm"
+        accuracy_decimals: 0
+        icon: mdi:align-horizontal-left
+        internal: true
+        on_value:
+          then:
+            - lambda: id(zone2_x1).publish_state(id(zone2x1).state);
+      - name: "Zone2 Y1"
+        id: zone2y1
+        unit_of_measurement: "cm"
+        accuracy_decimals: 0
+        icon: mdi:align-horizontal-distribute
+        internal: true
+        on_value:
+          then:
+            - lambda: id(zone2_y1).publish_state(id(zone2y1).state);
+      - name: "Zone2 X2"
+        id: zone2x2
+        unit_of_measurement: "cm"
+        accuracy_decimals: 0
+        icon: mdi:align-horizontal-right
+        internal: true
+        on_value:
+          then:
+            - lambda: id(zone2_x2).publish_state(id(zone2x2).state);
+      - name: "Zone2 Y2"
+        id: zone2y2
+        unit_of_measurement: "cm"
+        accuracy_decimals: 0
+        icon: mdi:align-horizontal-distribute
+        internal: true
+        on_value:
+          then:
+            - lambda: id(zone2_y2).publish_state(id(zone2y2).state);
+      - name: "Zone3 X1"
+        id: zone3x1
+        unit_of_measurement: "cm"
+        accuracy_decimals: 0
+        icon: mdi:align-horizontal-left
+        internal: true
+        on_value:
+          then:
+            - lambda: id(zone3_x1).publish_state(id(zone3x1).state);
+      - name: "Zone3 Y1"
+        id: zone3y1
+        unit_of_measurement: "cm"
+        accuracy_decimals: 0
+        icon: mdi:align-horizontal-distribute
+        internal: true
+        on_value:
+          then:
+            - lambda: id(zone3_y1).publish_state(id(zone3y1).state);
+      - name: "Zone3 X2"
+        id: zone3x2
+        unit_of_measurement: "cm"
+        accuracy_decimals: 0
+        icon: mdi:align-horizontal-right
+        internal: true
+        on_value:
+          then:
+            - lambda: id(zone3_x2).publish_state(id(zone3x2).state);
+      - name: "Zone3 Y2"
+        id: zone3y2
+        unit_of_measurement: "cm"
+        accuracy_decimals: 0
+        icon: mdi:align-horizontal-distribute
+        internal: true
+        on_value:
+          then:
+            - lambda: id(zone3_y2).publish_state(id(zone3y2).state);
+
+switch:
+  - platform: template
+    name: "Config Mode"
+    lambda: |-
+      if (id(binary_sensor_config_mode).state) {
+        return true;
+      } else {
+        return false;
+      }
+    turn_on_action:
+      - lambda: 'static_cast<LD2450 *>(ld2450)->setConfigMode(true);'
+    turn_off_action:
+      - lambda: 'static_cast<LD2450 *>(ld2450)->setConfigMode(false);'
+  - platform: template
+    name: "Bluetooth Function"
+    lambda: |-
+      if (id(binary_sensor_bluetooth_state).state) {
+        return true;
+      } else {
+        return false;
+      }
+    icon: mdi:bluetooth
+    turn_on_action:
+      - lambda: 'static_cast<LD2450 *>(ld2450)->setBluetooth(true);'
+    turn_off_action:
+      - lambda: 'static_cast<LD2450 *>(ld2450)->setBluetooth(false);'
+
+text_sensor:
+  - platform: custom
+    lambda: |-
+      auto uart_component = static_cast<LD2450 *>(ld2450);
+      return { uart_component->macAddress, uart_component->fwVersion, uart_component->trackingMode
+      };
+    text_sensors:
+      - name: "Mac Address"
+        icon: mdi:puzzle
+      - name: "Firmware Versoin"
+        icon: mdi:new-box
+      - name: "Tracking Mode"
+        icon: mdi:radar
+        id: tracking_mode
