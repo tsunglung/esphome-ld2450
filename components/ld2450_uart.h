@@ -4,6 +4,9 @@
 #define STATE_SIZE 8
 #define TARGETS 3
 
+#define highByte(val) (uint8_t)((val) >> 8)
+#define lowByte(val) (uint8_t)((val) & 0xff)
+
 static const char *TAG = "ld2450";
 class LD2450 : public PollingComponent, public UARTDevice
 {
